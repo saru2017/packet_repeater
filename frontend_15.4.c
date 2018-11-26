@@ -6,6 +6,47 @@
 int g_clients[MAX_CLIENTS];
 
 
+void watalab_list_serials()
+{
+  struct stat st;
+  char filename[256];
+
+  int ret;
+
+  for(int i = 0; i < 20; i++){
+    sprintf(filename, "/dev/ttyS%d", i);
+    ret = stat(filename, &st);
+    if(ret == 0){
+      printf("%s\n",filename);
+    }
+  }
+}
+
+
+int watalab_open_serial(char *device)
+{
+  int i, fd;
+  struct termios tty;
+  char *c, buf[256];
+
+  if((fd = open(device, O_RDWR|O_NOCTTY)) == -1){
+    watalab_list_serials();
+    exit(EXIT_FAILURE);
+  }
+
+  memset(&tty, 0, sizeof(tty));
+  tty.c_cflag = CS8|CLOCAL|CREAD;
+  tty.c_cc[VMIN] = 1;
+  tty.c_cc[VTIME] = 0;
+  cfsetospeed(&tty, B115200);
+  cfsetispeed(&tty, B115200);
+  tcflush(fd, TCIFLUSH);
+  tcsetattr(fd, TCSANOW, &tty);
+
+  return fd;
+}
+
+
 /***************************************************************/
 void watalab_init_clients()
 {
